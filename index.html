@@ -213,7 +213,7 @@ kbd { background: var(--cartao); border: 1px solid var(--linha); border-bottom-w
   </div>
 </section>
 
-<script src="dados.js"></script>
+<script src="dados.js?v=4"></script>
 <script>
 (() => {
 const EMP = window.EMPRESAS, NOT = window.NOTICIAS;
@@ -320,17 +320,17 @@ function desenharResultado() {
   const i = est.rodada - 1, n = NOT[i];
   $('r-num').textContent = est.rodada;
   $('r-titulo').textContent = n.titulo;
-  const mexidas = EMP.filter(e => n.efeitos[e.codigo] !== undefined);
-  const paradas = EMP.filter(e => n.efeitos[e.codigo] === undefined);
+  const mexidas = EMP;   // sempre as 10 empresas, na ordem do painel
+  const paradas = [];
   $('efeitos').innerHTML = mexidas.map((e, k) => {
-    const c = e.codigo, v = n.efeitos[c], h = est.precos[c];
+    const c = e.codigo, v = n.efeitos[c] || 0, h = est.precos[c];
     const tipo = v > 0 ? 'sobe' : v < 0 ? 'cai' : 'zero';
     const div = n.dividendo && n.dividendo[c] ? `<div class="divd">+ ${brl(n.dividendo[c])} de dividendo por ação</div>` : '';
     return `<div class="efeito ${tipo}" style="animation-delay:${k * 0.08}s">
       <div class="cab"><span class="ticker" style="background:${e.cor}">${c}</span><span class="nome">${e.nome}</span></div>
       <div class="pct ${classe(v)}">${v === 0 ? '= 0%' : (v > 0 ? '▲ ' : '▼ ') + pct(v, 0)}</div>
       <div class="de-para">${brl(h[h.length - 2])} → <b style="color:var(--texto)">${brl(h[h.length - 1])}</b></div>
-      ${div}<div class="porque">${(n.porque && n.porque[c]) || ''}</div>
+      ${div}<div class="porque">${(n.porque && n.porque[c]) || (v === 0 ? 'Esta notícia não afeta a empresa: quem não levantou placa acertou.' : '')}</div>
     </div>`;
   }).join('');
   $('sem-efeito').innerHTML = paradas.length ? '<b>= Não mexeram:</b> ' + paradas.map(e => e.nome).join(', ') + ' <span style="opacity:.75">(acertou quem não levantou placa)</span>' : '';
