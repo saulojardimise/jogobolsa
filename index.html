@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador da Bolsa · BolsaLab</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23062344'/><path d='M6 22l6-7 5 4 9-11' stroke='%233DDCAA' stroke-width='3.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<style>
+:root {
+  --marinho: #062344; --fundo: #eef2f8; --cartao: #fff; --linha: #d7dfec; --texto: #0d1b3a; --suave: #55627a;
+  --sobe: #0a8a55; --sobe-claro: #dff6ea; --cai: #d0312d; --cai-claro: #fde3e1; --destaque: #3DDCAA; --ouro: #e0a800;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--fundo); color: var(--texto); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: clamp(14px, 1.15vw, 22px); overflow: hidden; }
+button { font: inherit; cursor: pointer; border: 0; border-radius: 12px; }
+.tela { position: fixed; inset: 0; display: none; flex-direction: column; padding: 2.2vh 2.4vw; gap: 2vh; }
+.tela.ativa { display: flex; }
+
+/* ---------- topo ---------- */
+.topo { display: flex; align-items: center; justify-content: space-between; gap: 2vw; }
+.marca { display: flex; align-items: center; gap: .7em; font-weight: 800; font-size: 1.5em; color: var(--marinho); letter-spacing: -.02em; }
+.marca svg { width: 1.6em; height: 1.6em; }
+.marca small { font-weight: 600; font-size: .55em; color: var(--suave); letter-spacing: 0; }
+.rodada { font-weight: 700; color: var(--suave); font-size: 1.05em; }
+.rodada b { color: var(--marinho); font-size: 1.35em; }
+.barra { height: .5em; background: var(--linha); border-radius: 99px; overflow: hidden; width: 14vw; margin-top: .35em; }
+.barra i { display: block; height: 100%; background: var(--marinho); border-radius: 99px; transition: width .5s; }
+
+/* ---------- painel ---------- */
+.grade { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(5, 1fr); grid-auto-rows: 1fr; gap: 1.4vh 1.2vw; }
+.acao { background: var(--cartao); border-radius: 18px; padding: 1.6vh 1.1vw; display: flex; flex-direction: column; gap: .6vh; box-shadow: 0 2px 10px rgb(6 35 68 / .07); border: 3px solid transparent; transition: border-color .4s, transform .4s; min-height: 0; }
+.acao.mexeu-sobe { border-color: var(--sobe); }
+.acao.mexeu-cai { border-color: var(--cai); }
+.acao .cab { display: flex; align-items: center; justify-content: space-between; gap: .5em; }
+.ticker { color: #fff; font-weight: 800; padding: .2em .55em; border-radius: 8px; font-size: 1em; letter-spacing: .02em; }
+.ultima { font-weight: 800; font-size: .9em; padding: .15em .5em; border-radius: 8px; }
+.ultima.s { color: var(--sobe); background: var(--sobe-claro); }
+.ultima.c { color: var(--cai); background: var(--cai-claro); }
+.acao .nome { font-weight: 800; font-size: 1.25em; line-height: 1.1; }
+.acao .setor { color: var(--suave); font-size: .85em; }
+.acao .preco { font-weight: 800; font-size: 2em; letter-spacing: -.02em; margin-top: auto; font-variant-numeric: tabular-nums; }
+.acao .acum { font-weight: 800; font-size: 1.15em; font-variant-numeric: tabular-nums; }
+.acao .div { font-size: .8em; color: var(--ouro); font-weight: 700; }
+.s { color: var(--sobe); } .c { color: var(--cai); } .z { color: var(--suave); }
+.spark { width: 100%; height: 5.5vh; display: block; }
+
+.rodape { display: flex; gap: 1vw; align-items: center; justify-content: space-between; }
+.rodape .grupo { display: flex; gap: .8vw; align-items: center; }
+.btn { background: var(--cartao); color: var(--marinho); font-weight: 700; padding: .7em 1.1em; border: 2px solid var(--linha); }
+.btn:hover { border-color: var(--marinho); }
+.btn:disabled { opacity: .4; cursor: default; }
+.btn.forte { background: var(--marinho); color: #fff; border-color: var(--marinho); font-size: 1.35em; padding: .7em 1.6em; }
+.btn.forte:hover { background: #0b3566; }
+.btn.verde { background: var(--sobe); border-color: var(--sobe); color: #fff; }
+.btn.confirmar { background: var(--cai); border-color: var(--cai); color: #fff; }
+.dica { color: var(--suave); font-size: .85em; }
+kbd { background: var(--cartao); border: 1px solid var(--linha); border-bottom-width: 3px; border-radius: 6px; padding: 0 .4em; font: inherit; font-size: .9em; }
+
+/* ---------- notícia ---------- */
+#tela-noticia { background: var(--marinho); color: #fff; justify-content: center; align-items: center; text-align: center; }
+.jornal { max-width: 78vw; display: flex; flex-direction: column; align-items: center; gap: 3vh; }
+.urgente { display: inline-flex; gap: .6em; align-items: center; background: var(--cai); color: #fff; font-weight: 800; letter-spacing: .15em; padding: .4em 1em; border-radius: 99px; font-size: 1.1em; animation: pisca 1.2s ease-in-out 3; }
+.urgente.boato { background: var(--ouro); color: #1c1300; }
+@keyframes pisca { 50% { opacity: .35; } }
+.jornal h1 { margin: 0; font-size: clamp(32px, 4.6vw, 96px); line-height: 1.05; letter-spacing: -.03em; font-weight: 800; animation: entra .6s ease-out; }
+.jornal p.texto { margin: 0; font-size: 1.7em; color: #c6d3ea; max-width: 62vw; line-height: 1.35; }
+.ficticia { font-size: .85em; color: #8fa3c0; }
+@keyframes entra { from { opacity: 0; transform: translateY(30px); } }
+
+.pergunta { margin-top: 2vh; display: flex; flex-direction: column; align-items: center; gap: 2.2vh; }
+.pergunta h2 { margin: 0; font-size: 2.1em; color: var(--destaque); }
+.placas { display: flex; gap: 3vw; }
+.placa { width: 17vw; padding: 2.4vh 0; border-radius: 20px; font-weight: 900; font-size: 2.6em; color: #fff; display: flex; flex-direction: column; align-items: center; line-height: 1; }
+.placa span { font-size: 1.6em; }
+.placa.sobe { background: var(--sobe); } .placa.cai { background: var(--cai); }
+.contagem { font-size: 5em; font-weight: 900; color: var(--destaque); min-height: 1.1em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.acoes-noticia { display: flex; gap: 1vw; margin-top: 1vh; }
+#tela-noticia .btn { background: transparent; color: #fff; border-color: #2c4a74; }
+#tela-noticia .btn:hover { border-color: #fff; }
+#tela-noticia .btn.forte { background: var(--destaque); color: var(--marinho); border-color: var(--destaque); }
+
+/* ---------- resultado ---------- */
+.res-titulo { display: flex; align-items: baseline; gap: 1em; }
+.res-titulo h1 { margin: 0; font-size: 2.1em; letter-spacing: -.02em; color: var(--marinho); }
+.efeitos { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(28vw, 1fr)); gap: 1.4vh 1.2vw; align-content: start; overflow: auto; }
+.efeito { background: var(--cartao); border-radius: 18px; padding: 1.6vh 1.2vw; display: grid; grid-template-columns: auto 1fr auto; gap: .3em 1em; align-items: center; border-left: 10px solid var(--linha); animation: entra .5s ease-out backwards; }
+.efeito.sobe { border-left-color: var(--sobe); } .efeito.cai { border-left-color: var(--cai); }
+.efeito .nome { font-weight: 800; font-size: 1.4em; }
+.efeito .pct { font-weight: 900; font-size: 2.6em; font-variant-numeric: tabular-nums; grid-row: span 2; }
+.efeito .de-para { color: var(--suave); font-variant-numeric: tabular-nums; }
+.efeito .porque { grid-column: 1 / -1; font-size: 1.05em; line-height: 1.35; }
+.efeito .porque:empty { display: none; }
+.sem-efeito { color: var(--suave); }
+.licao { background: var(--marinho); color: #fff; border-radius: 18px; padding: 1.8vh 1.6vw; font-size: 1.45em; font-weight: 700; display: flex; gap: .8em; align-items: center; }
+.licao b { color: var(--destaque); white-space: nowrap; }
+
+/* ---------- final ---------- */
+#tela-final { background: var(--marinho); color: #fff; }
+#tela-final .marca { color: #fff; }
+.podio { display: flex; align-items: flex-end; justify-content: center; gap: 2vw; flex: 1; min-height: 0; }
+.degrau { width: 18vw; display: flex; flex-direction: column; align-items: center; gap: 1vh; animation: entra .7s ease-out backwards; }
+.degrau .bloco { width: 100%; border-radius: 16px 16px 0 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 1.5vh; font-size: 3.5em; font-weight: 900; color: var(--marinho); }
+.degrau .quem { font-size: 1.6em; font-weight: 800; text-align: center; }
+.degrau .quanto { font-size: 2.2em; font-weight: 900; }
+.lista-final { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1vh 1vw; }
+.lista-final div { background: #0f3360; border-radius: 12px; padding: 1vh .8vw; display: flex; justify-content: space-between; font-weight: 700; }
+.lista-final .s { color: #5fe0a8; } .lista-final .c { color: #ff8a84; }
+.licoes-finais { display: flex; gap: 1vw; }
+.licoes-finais div { flex: 1; background: #0f3360; border-radius: 14px; padding: 1.4vh 1vw; font-size: .95em; line-height: 1.35; }
+.licoes-finais b { color: var(--destaque); display: block; font-size: 1.1em; margin-bottom: .2em; }
+#tela-final .btn { background: transparent; color: #fff; border-color: #2c4a74; }
+
+.confete { position: fixed; top: -5vh; width: 12px; height: 18px; z-index: 9; pointer-events: none; animation: cai linear forwards; }
+@keyframes cai { to { transform: translateY(115vh) rotate(720deg); } }
+
+@media (max-width: 900px) {
+  body { overflow: auto; font-size: 14px; }
+  .tela { position: static; min-height: 100vh; }
+  .grade { grid-template-columns: repeat(2, 1fr); }
+  .lista-final { grid-template-columns: repeat(2, 1fr); }
+  .placa { width: 40vw; }
+  .rodape, .licoes-finais { flex-wrap: wrap; }
+}
+</style>
+</head>
+<body>
+
+<!-- ======================= PAINEL ======================= -->
+<section class="tela" id="tela-painel">
+  <div class="topo">
+    <div class="marca">
+      <svg viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#062344"/><path d="M6 22l6-7 5 4 9-11" stroke="#3DDCAA" stroke-width="3.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div>Simulador da Bolsa<br><small>BolsaLab · preços e notícias fictícios</small></div>
+    </div>
+    <div class="rodada"><div>Notícia <b id="num-rodada">0</b> de <span id="total-rodadas"></span></div><div class="barra"><i id="progresso"></i></div></div>
+  </div>
+  <div class="grade" id="grade"></div>
+  <div class="rodape">
+    <div class="grupo">
+      <button class="btn" id="b-desfazer" title="Volta uma notícia">↶ Desfazer</button>
+      <button class="btn" id="b-reiniciar">Reiniciar</button>
+      <button class="btn" id="b-tela">⛶ Tela cheia</button>
+      <a class="btn" href="imprimir.html" target="_blank" style="text-decoration:none">🖨 Cards e plaquinhas</a>
+    </div>
+    <div class="grupo">
+      <span class="dica"><kbd>Espaço</kbd> avança</span>
+      <button class="btn" id="b-ranking">🏆 Ranking final</button>
+      <button class="btn forte" id="b-proxima">Próxima notícia ▶</button>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= NOTÍCIA ======================= -->
+<section class="tela" id="tela-noticia">
+  <div class="jornal">
+    <div class="urgente" id="selo">● URGENTE</div>
+    <h1 id="n-titulo"></h1>
+    <p class="texto" id="n-texto"></p>
+    <div class="ficticia">Notícia fictícia, criada para a dinâmica</div>
+    <div class="pergunta" id="pergunta">
+      <h2>E agora? O que acontece com a SUA ação?</h2>
+      <div class="placas">
+        <div class="placa sobe"><span>▲</span>SOBE</div>
+        <div class="placa cai"><span>▼</span>CAI</div>
+      </div>
+      <div class="contagem" id="contagem"></div>
+    </div>
+    <div class="acoes-noticia">
+      <button class="btn" id="b-voltar-noticia">← Painel</button>
+      <button class="btn" id="b-contar">⏱ Contar 10 s</button>
+      <button class="btn forte" id="b-revelar">Revelar o que aconteceu ▶</button>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= RESULTADO ======================= -->
+<section class="tela" id="tela-resultado">
+  <div class="res-titulo"><span class="rodada">Notícia <b id="r-num"></b></span><h1 id="r-titulo"></h1></div>
+  <div class="efeitos" id="efeitos"></div>
+  <div class="sem-efeito" id="sem-efeito"></div>
+  <div class="licao" id="licao"></div>
+  <div class="rodape">
+    <div class="grupo"><button class="btn" id="b-painel">Ver painel</button></div>
+    <div class="grupo"><span class="dica"><kbd>Espaço</kbd> avança</span><button class="btn forte" id="b-seguir">Próxima notícia ▶</button></div>
+  </div>
+</section>
+
+<!-- ======================= FINAL ======================= -->
+<section class="tela" id="tela-final">
+  <div class="topo">
+    <div class="marca">🏆 Resultado final <small id="f-sub"></small></div>
+    <button class="btn" id="b-voltar-final">← Painel</button>
+  </div>
+  <div class="podio" id="podio"></div>
+  <div class="lista-final" id="lista-final"></div>
+  <div class="licoes-finais">
+    <div><b>Notícias movem preços</b>O preço reflete o que as pessoas esperam do futuro da empresa.</div>
+    <div><b>Surpresa é o que conta</b>Notícia já esperada mexe pouco. O mercado reage ao inesperado.</div>
+    <div><b>Cuidado com boatos</b>Quem vendeu no pânico com o boato do BB perdeu a recuperação.</div>
+    <div><b>Diversificar protege</b>Ter várias ações juntas reduz o tombo quando uma delas cai.</div>
+    <div><b>Ninguém sabe o futuro</b>Na vida real, você não sabe a notícia antes. Pense no longo prazo.</div>
+  </div>
+</section>
+
+<script src="dados.js"></script>
+<script>
+(() => {
+const EMP = window.EMPRESAS, NOT = window.NOTICIAS;
+const CHAVE = 'simulador-bolsa-v1';
+const $ = id => document.getElementById(id);
+const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const pct = (v, casas = 1) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas }) + '%';
+const classe = v => v > 0.0001 ? 's' : v < -0.0001 ? 'c' : 'z';
+
+function inicial() {
+  const precos = {}, divs = {};
+  EMP.forEach(e => { precos[e.codigo] = [e.preco]; divs[e.codigo] = 0; });
+  return { rodada: 0, precos, divs, tela: 'painel' };
+}
+let est = inicial(), historico = [];
+try {
+  const salvo = JSON.parse(localStorage.getItem(CHAVE) || 'null');
+  if (salvo && salvo.est && salvo.est.precos && EMP.every(e => salvo.est.precos[e.codigo])) { est = salvo.est; historico = salvo.historico || []; }
+} catch (_) {}
+function salvar() { try { localStorage.setItem(CHAVE, JSON.stringify({ est, historico })); } catch (_) {} }
+
+const atual = c => est.precos[c][est.precos[c].length - 1];
+const retorno = c => { const p0 = est.precos[c][0]; return ((atual(c) + est.divs[c]) / p0 - 1) * 100; };
+const ultimaVar = c => { const h = est.precos[c]; return h.length < 2 ? null : (h[h.length - 1] / h[h.length - 2] - 1) * 100; };
+
+function spark(c) {
+  const h = est.precos[c];
+  if (h.length < 2) return '<svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none"><line x1="0" y1="15" x2="100" y2="15" stroke="#d7dfec" stroke-width="2" stroke-dasharray="4 4"/></svg>';
+  const mn = Math.min(...h), mx = Math.max(...h), r = mx - mn || 1;
+  const pts = h.map((v, i) => `${(i / (h.length - 1) * 100).toFixed(1)},${(27 - (v - mn) / r * 24).toFixed(1)}`).join(' ');
+  const cor = atual(c) >= h[0] ? 'var(--sobe)' : 'var(--cai)';
+  return `<svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${cor}" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+
+function desenharPainel() {
+  $('num-rodada').textContent = est.rodada;
+  $('total-rodadas').textContent = NOT.length;
+  $('progresso').style.width = (est.rodada / NOT.length * 100) + '%';
+  $('grade').innerHTML = EMP.map(e => {
+    const c = e.codigo, u = ultimaVar(c), r = retorno(c);
+    const mexeu = u === null || Math.abs(u) < 0.0001 ? '' : (u > 0 ? 'mexeu-sobe' : 'mexeu-cai');
+    return `<div class="acao ${mexeu}">
+      <div class="cab"><span class="ticker" style="background:${e.cor}">${c}</span>${u !== null && Math.abs(u) > 0.0001 ? `<span class="ultima ${classe(u)}">${u > 0 ? '▲' : '▼'} ${pct(u)}</span>` : ''}</div>
+      <div class="nome">${e.nome}</div><div class="setor">${e.setor}</div>
+      ${spark(c)}
+      <div class="preco">${brl(atual(c))}</div>
+      <div class="acum ${classe(r)}">${pct(r)} <span class="z" style="font-weight:600;font-size:.75em">no jogo</span></div>
+      ${est.divs[c] ? `<div class="div">+ ${brl(est.divs[c])} em dividendos</div>` : ''}
+    </div>`;
+  }).join('');
+  const acabou = est.rodada >= NOT.length;
+  $('b-proxima').textContent = acabou ? '🏆 Ver ranking final' : 'Próxima notícia ▶';
+  $('b-desfazer').disabled = !historico.length;
+}
+
+function mostrar(tela) {
+  est.tela = tela; salvar();
+  document.querySelectorAll('.tela').forEach(s => s.classList.toggle('ativa', s.id === 'tela-' + tela));
+  pararContagem();
+  if (tela === 'painel') desenharPainel();
+  if (tela === 'noticia') desenharNoticia();
+  if (tela === 'resultado') desenharResultado();
+  if (tela === 'final') desenharFinal();
+}
+
+// ---------- notícia ----------
+function desenharNoticia() {
+  const n = NOT[est.rodada];
+  const boato = /^BOATO/i.test(n.titulo);
+  $('selo').textContent = boato ? '⚠ CIRCULA NAS REDES' : '● URGENTE · NOTÍCIA ' + (est.rodada + 1);
+  $('selo').classList.toggle('boato', boato);
+  $('n-titulo').textContent = n.titulo.replace(/^BOATO:\s*/i, '');
+  $('n-texto').textContent = n.texto;
+  $('contagem').textContent = '';
+  // reinicia animações
+  ['selo', 'n-titulo'].forEach(id => { const el = $(id); el.style.animation = 'none'; el.offsetHeight; el.style.animation = ''; });
+}
+let timer = null;
+function pararContagem() { if (timer) { clearInterval(timer); timer = null; } }
+function contar() {
+  pararContagem();
+  let s = 10; $('contagem').textContent = s;
+  timer = setInterval(() => {
+    s--;
+    if (s > 0) $('contagem').textContent = s;
+    else { pararContagem(); $('contagem').textContent = 'Plaquinhas para cima! ✋'; }
+  }, 1000);
+}
+
+function revelar() {
+  const n = NOT[est.rodada];
+  historico.push(JSON.parse(JSON.stringify(est)));
+  EMP.forEach(e => {
+    const c = e.codigo, v = n.efeitos[c] || 0;
+    est.precos[c].push(Math.round(atual(c) * (1 + v / 100) * 100) / 100);
+    if (n.dividendo && n.dividendo[c]) est.divs[c] += n.dividendo[c];
+  });
+  est.rodada++;
+  mostrar('resultado');
+}
+
+// ---------- resultado ----------
+function desenharResultado() {
+  const i = est.rodada - 1, n = NOT[i];
+  $('r-num').textContent = est.rodada;
+  $('r-titulo').textContent = n.titulo;
+  const mexidas = EMP.filter(e => n.efeitos[e.codigo] !== undefined)
+    .sort((a, b) => Math.abs(n.efeitos[b.codigo]) - Math.abs(n.efeitos[a.codigo]));
+  const paradas = EMP.filter(e => n.efeitos[e.codigo] === undefined);
+  $('efeitos').innerHTML = mexidas.map((e, k) => {
+    const c = e.codigo, v = n.efeitos[c], h = est.precos[c];
+    const tipo = v > 0 ? 'sobe' : v < 0 ? 'cai' : '';
+    const div = n.dividendo && n.dividendo[c] ? ` <b style="color:var(--ouro)">+ ${brl(n.dividendo[c])} de dividendo por ação</b>` : '';
+    return `<div class="efeito ${tipo}" style="animation-delay:${k * 0.12}s">
+      <span class="ticker" style="background:${e.cor}">${c}</span>
+      <span class="nome">${e.nome}</span>
+      <span class="pct ${classe(v)}">${v === 0 ? '= 0%' : (v > 0 ? '▲ ' : '▼ ') + pct(v, 0)}</span>
+      <span class="de-para" style="grid-column:1/3">${brl(h[h.length - 2])} → <b style="color:var(--texto)">${brl(h[h.length - 1])}</b>${div}</span>
+      <div class="porque">${(n.porque && n.porque[c]) || ''}</div>
+    </div>`;
+  }).join('');
+  $('sem-efeito').textContent = paradas.length ? 'Não mexeram: ' + paradas.map(e => e.nome).join(', ') : '';
+  $('licao').innerHTML = `<b>💡 Lição:</b> <span>${n.licao || ''}</span>`;
+  $('b-seguir').textContent = est.rodada >= NOT.length ? '🏆 Ver ranking final' : 'Próxima notícia ▶';
+}
+
+// ---------- final ----------
+function desenharFinal() {
+  const rank = EMP.map(e => ({ e, r: retorno(e.codigo) })).sort((a, b) => b.r - a.r);
+  $('f-sub').textContent = `depois de ${est.rodada} notícia${est.rodada === 1 ? '' : 's'} · rendimento com dividendos`;
+  const ordem = [1, 0, 2], alturas = ['34vh', '26vh', '20vh'], cores = ['#ffd34d', '#cfd8e6', '#e5a46b'];
+  $('podio').innerHTML = ordem.filter(k => rank[k]).map((k, j) => `
+    <div class="degrau" style="animation-delay:${[0.5, 1.1, 0][j]}s">
+      <span class="ticker" style="background:${rank[k].e.cor};font-size:1.3em">${rank[k].e.codigo}</span>
+      <div class="quem">${rank[k].e.nome}</div>
+      <div class="quanto ${classe(rank[k].r)}" style="color:${rank[k].r >= 0 ? '#5fe0a8' : '#ff8a84'}">${pct(rank[k].r)}</div>
+      <div class="bloco" style="height:${alturas[k]};background:${cores[k]}">${k + 1}º</div>
+    </div>`).join('');
+  $('lista-final').innerHTML = rank.slice(3).map((x, k) => `<div><span>${k + 4}º ${x.e.nome}</span><span class="${classe(x.r)}">${pct(x.r)}</span></div>`).join('');
+  const media = rank.reduce((s, x) => s + x.r, 0) / rank.length;
+  $('lista-final').insertAdjacentHTML('beforeend', `<div style="grid-column:1/-1;background:#14406f;justify-content:center;gap:1em">🧺 Quem tivesse um pouco de cada ação: <span class="${classe(media)}">${pct(media)}</span></div>`);
+  confete();
+}
+function confete() {
+  const cores = ['#3DDCAA', '#ffd34d', '#ff8a84', '#7cb8ff', '#fff'];
+  for (let i = 0; i < 90; i++) {
+    const d = document.createElement('div'); d.className = 'confete';
+    d.style.left = Math.random() * 100 + 'vw'; d.style.background = cores[i % cores.length];
+    d.style.animationDuration = (2.5 + Math.random() * 2.5) + 's'; d.style.animationDelay = Math.random() * 1.2 + 's';
+    document.body.appendChild(d); setTimeout(() => d.remove(), 7000);
+  }
+}
+
+// ---------- ações ----------
+function avancar() {
+  if (est.tela === 'painel' || est.tela === 'resultado') mostrar(est.rodada >= NOT.length ? 'final' : 'noticia');
+  else if (est.tela === 'noticia') revelar();
+}
+function desfazer() {
+  if (!historico.length) return;
+  est = historico.pop(); est.tela = 'painel'; mostrar('painel');
+}
+let confirmando = null;
+function reiniciar() {
+  const b = $('b-reiniciar');
+  if (!confirmando) {
+    b.textContent = 'Clique de novo para zerar'; b.classList.add('confirmar');
+    confirmando = setTimeout(() => { b.textContent = 'Reiniciar'; b.classList.remove('confirmar'); confirmando = null; }, 3000);
+    return;
+  }
+  clearTimeout(confirmando); confirmando = null; b.textContent = 'Reiniciar'; b.classList.remove('confirmar');
+  est = inicial(); historico = []; mostrar('painel');
+}
+function telaCheia() {
+  try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch (_) {}
+}
+
+$('b-proxima').onclick = avancar;
+$('b-revelar').onclick = revelar;
+$('b-seguir').onclick = avancar;
+$('b-contar').onclick = contar;
+$('b-painel').onclick = () => mostrar('painel');
+$('b-voltar-noticia').onclick = () => mostrar('painel');
+$('b-voltar-final').onclick = () => mostrar('painel');
+$('b-ranking').onclick = () => mostrar('final');
+$('b-desfazer').onclick = desfazer;
+$('b-reiniciar').onclick = reiniciar;
+$('b-tela').onclick = telaCheia;
+document.addEventListener('keydown', ev => {
+  if (ev.target.closest && ev.target.closest('input,textarea')) return;
+  if (ev.key === ' ' || ev.key === 'Enter' || ev.key === 'ArrowRight' || ev.key === 'PageDown') { ev.preventDefault(); avancar(); }
+  else if (ev.key === 'Escape' || ev.key === 'ArrowLeft' || ev.key === 'PageUp') { if (est.tela !== 'painel') mostrar('painel'); }
+  else if (ev.key.toLowerCase() === 'f') telaCheia();
+  else if (ev.key.toLowerCase() === 't' && est.tela === 'noticia') contar();
+});
+// botões não devem "roubar" o espaço
+document.querySelectorAll('button').forEach(b => b.addEventListener('keydown', ev => { if (ev.key === ' ' || ev.key === 'Enter') ev.preventDefault(); }));
+
+mostrar(est.tela && ['painel', 'noticia', 'resultado', 'final'].includes(est.tela) && !(est.tela === 'resultado' && est.rodada === 0) && !(est.tela === 'noticia' && est.rodada >= NOT.length) ? est.tela : 'painel');
+})();
+</script>
+</body>
+</html>

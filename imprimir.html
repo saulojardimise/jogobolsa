@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cards e plaquinhas · Simulador da Bolsa</title>
+<style>
+@page { size: A4; margin: 10mm; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: #0d1b3a; background: #eef2f8; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.aviso { max-width: 190mm; margin: 16px auto; background: #fff; border-radius: 12px; padding: 16px 20px; line-height: 1.5; }
+.aviso button { font: inherit; font-weight: 700; background: #062344; color: #fff; border: 0; border-radius: 10px; padding: 10px 18px; cursor: pointer; }
+.aviso label { margin-right: 16px; }
+.folha { width: 190mm; height: 277mm; margin: 0 auto 10mm; background: #fff; display: grid; gap: 6mm; page-break-after: always; break-after: page; overflow: hidden; }
+.folha.cards { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.folha.placas { grid-template-rows: 1fr 1fr; gap: 0; }
+
+.card { border: 2.5px dashed #b8c3d6; border-radius: 6mm; padding: 7mm 6mm; display: flex; flex-direction: column; gap: 3mm; position: relative; overflow: hidden; }
+.card .faixa { position: absolute; inset: 0 0 auto 0; height: 9mm; }
+.card .tk { margin-top: 5mm; display: inline-block; align-self: flex-start; color: #fff; font-weight: 900; font-size: 22pt; padding: 1.5mm 4mm; border-radius: 3mm; letter-spacing: .5px; }
+.card h2 { margin: 0; font-size: 26pt; line-height: 1.05; letter-spacing: -.5px; }
+.card .setor { font-size: 13pt; color: #55627a; font-weight: 600; }
+.card .preco { font-size: 13pt; } .card .preco b { font-size: 20pt; }
+.card .voce { font-size: 11.5pt; line-height: 1.35; background: #f1f4fa; border-radius: 3mm; padding: 3mm; }
+.card .linha { margin-top: auto; font-size: 11pt; border-bottom: 1.5px solid #0d1b3a; padding-bottom: 1mm; }
+.card .placar { font-size: 9.5pt; color: #55627a; }
+.card .caixas { display: grid; grid-template-columns: repeat(13, 1fr); gap: 1mm; margin-top: 1mm; }
+.card .caixas span { border: 1.3px solid #9aa7bd; border-radius: 1.5mm; height: 7mm; font-size: 7pt; color: #9aa7bd; padding: .5mm; }
+
+.placa { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; border: 2.5px dashed #fff; }
+.placa .seta { font-size: 150pt; line-height: .9; }
+.placa .palavra { font-size: 110pt; font-weight: 900; letter-spacing: 4px; line-height: 1; }
+.placa .sub { font-size: 16pt; opacity: .9; margin-top: 4mm; }
+.placa.sobe { background: #0a8a55; } .placa.cai { background: #d0312d; }
+.placa.cai .conteudo { transform: rotate(180deg); display: flex; flex-direction: column; align-items: center; }
+.placa.sobe .conteudo { display: flex; flex-direction: column; align-items: center; }
+
+@media print { body { background: #fff; } .aviso { display: none; } .folha { margin: 0; } }
+</style>
+</head>
+<body>
+<div class="aviso">
+  <b>Para imprimir</b> (Ctrl+P, papel A4, "gráficos de fundo" ligado):<br>
+  • <b>Cards das ações</b>: 4 por folha. Imprima quantas cópias precisar; vários alunos podem ter a mesma ação.<br>
+  • <b>Plaquinha</b>: uma folha por aluno ou equipe. Dobre ao meio na linha: de um lado <b>SOBE</b>, do outro <b>CAI</b>.<br><br>
+  <label><input type="checkbox" id="c-cards" checked> Cards das ações</label>
+  <label><input type="checkbox" id="c-placas" checked> Plaquinhas</label>
+  <label>Cópias da plaquinha: <input type="number" id="n-placas" value="1" min="1" max="60" style="width:4em"></label>
+  <button onclick="window.print()">🖨 Imprimir</button>
+</div>
+<div id="cards"></div>
+<div id="placas"></div>
+
+<script src="dados.js"></script>
+<script>
+const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+const n = window.NOTICIAS.length;
+function card(e) {
+  return `<div class="card">
+    <div class="faixa" style="background:${e.cor}"></div>
+    <span class="tk" style="background:${e.cor}">${e.codigo}</span>
+    <h2>${e.nome}</h2>
+    <div class="setor">${e.setor}</div>
+    <div class="preco">Preço inicial: <b>${brl(e.preco)}</b></div>
+    <div class="voce">Você é acionista da <b>${e.nome}</b>. A cada notícia, levante a plaquinha: sua ação vai <b style="color:#0a8a55">SUBIR ▲</b> ou <b style="color:#d0312d">CAIR ▼</b>?</div>
+    <div class="linha">Nome: </div>
+    <div class="placar">Marque ✓ quando acertar a previsão:
+      <div class="caixas">${Array.from({ length: Math.min(n, 13) }, (_, i) => `<span>${i + 1}</span>`).join('')}</div>
+    </div>
+  </div>`;
+}
+const E = window.EMPRESAS, folhasCards = [];
+for (let i = 0; i < E.length; i += 4) folhasCards.push(`<div class="folha cards">${E.slice(i, i + 4).map(card).join('')}</div>`);
+document.getElementById('cards').innerHTML = folhasCards.join('');
+
+const placa = `<div class="folha placas">
+  <div class="placa cai"><div class="conteudo"><div class="seta">▼</div><div class="palavra">CAI</div><div class="sub">a ação vai se desvalorizar</div></div></div>
+  <div class="placa sobe"><div class="conteudo"><div class="seta">▲</div><div class="palavra">SOBE</div><div class="sub">a ação vai se valorizar</div></div></div>
+</div>`;
+function atualizar() {
+  const q = Math.max(1, Math.min(60, +document.getElementById('n-placas').value || 1));
+  document.getElementById('placas').innerHTML = placa.repeat(q);
+  document.getElementById('cards').style.display = document.getElementById('c-cards').checked ? '' : 'none';
+  document.getElementById('placas').style.display = document.getElementById('c-placas').checked ? '' : 'none';
+}
+['c-cards', 'c-placas', 'n-placas'].forEach(id => document.getElementById(id).addEventListener('input', atualizar));
+atualizar();
+</script>
+</body>
+</html>
