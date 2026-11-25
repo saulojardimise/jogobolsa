@@ -62,7 +62,7 @@ function card(e) {
     <h2>${e.nome}</h2>
     <div class="setor">${e.setor}</div>
     <div class="preco">Preço inicial: <b>${brl(e.preco)}</b></div>
-    <div class="voce">Você é acionista da <b>${e.nome}</b>. A cada notícia, levante a plaquinha: sua ação vai <b style="color:#0a8a55">SUBIR ▲</b> ou <b style="color:#d0312d">CAIR ▼</b>?</div>
+    <div class="voce">Você é acionista da <b>${e.nome}</b>. A cada notícia, levante a plaquinha: sua ação vai <b style="color:#0a8a55">SUBIR ▲</b> ou <b style="color:#d0312d">CAIR ▼</b>? Se acha que <b>não muda</b>, não levante nada.</div>
     <div class="linha">Nome: </div>
     <div class="placar">Marque ✓ quando acertar a previsão:
       <div class="caixas">${Array.from({ length: Math.min(n, 13) }, (_, i) => `<span>${i + 1}</span>`).join('')}</div>

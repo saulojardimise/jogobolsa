@@ -12,9 +12,9 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
-body { background: var(--fundo); color: var(--texto); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: clamp(14px, 1.15vw, 22px); overflow: hidden; }
+body { background: var(--fundo); color: var(--texto); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: clamp(12px, min(1.15vw, 2.05vh), 22px); overflow: hidden; }
 button { font: inherit; cursor: pointer; border: 0; border-radius: 12px; }
-.tela { position: fixed; inset: 0; display: none; flex-direction: column; padding: 2.2vh 2.4vw; gap: 2vh; }
+.tela { position: fixed; inset: 0; display: none; flex-direction: column; padding: 2.2vh 2.4vw; gap: 2vh; overflow: auto; }
 .tela.ativa { display: flex; }
 
 /* ---------- topo ---------- */
@@ -58,23 +58,25 @@ button { font: inherit; cursor: pointer; border: 0; border-radius: 12px; }
 kbd { background: var(--cartao); border: 1px solid var(--linha); border-bottom-width: 3px; border-radius: 6px; padding: 0 .4em; font: inherit; font-size: .9em; }
 
 /* ---------- notícia ---------- */
-#tela-noticia { background: var(--marinho); color: #fff; justify-content: center; align-items: center; text-align: center; }
-.jornal { max-width: 78vw; display: flex; flex-direction: column; align-items: center; gap: 3vh; }
+#tela-noticia { background: var(--marinho); color: #fff; justify-content: safe center; align-items: center; text-align: center; }
+.jornal { max-width: 78vw; display: flex; flex-direction: column; align-items: center; gap: 2.2vh; }
 .urgente { display: inline-flex; gap: .6em; align-items: center; background: var(--cai); color: #fff; font-weight: 800; letter-spacing: .15em; padding: .4em 1em; border-radius: 99px; font-size: 1.1em; animation: pisca 1.2s ease-in-out 3; }
 .urgente.boato { background: var(--ouro); color: #1c1300; }
 @keyframes pisca { 50% { opacity: .35; } }
-.jornal h1 { margin: 0; font-size: clamp(32px, 4.6vw, 96px); line-height: 1.05; letter-spacing: -.03em; font-weight: 800; animation: entra .6s ease-out; }
-.jornal p.texto { margin: 0; font-size: 1.7em; color: #c6d3ea; max-width: 62vw; line-height: 1.35; }
+.jornal h1 { margin: 0; font-size: clamp(26px, min(4.6vw, 8.5vh), 96px); line-height: 1.05; letter-spacing: -.03em; font-weight: 800; animation: entra .6s ease-out; }
+.jornal p.texto { margin: 0; font-size: 1.5em; color: #c6d3ea; max-width: 62vw; line-height: 1.35; }
 .ficticia { font-size: .85em; color: #8fa3c0; }
 @keyframes entra { from { opacity: 0; transform: translateY(30px); } }
 
-.pergunta { margin-top: 2vh; display: flex; flex-direction: column; align-items: center; gap: 2.2vh; }
-.pergunta h2 { margin: 0; font-size: 2.1em; color: var(--destaque); }
-.placas { display: flex; gap: 3vw; }
-.placa { width: 17vw; padding: 2.4vh 0; border-radius: 20px; font-weight: 900; font-size: 2.6em; color: #fff; display: flex; flex-direction: column; align-items: center; line-height: 1; }
+.pergunta { margin-top: 1vh; display: flex; flex-direction: column; align-items: center; gap: 1.6vh; }
+.pergunta h2 { margin: 0; font-size: 1.9em; color: var(--destaque); }
+.placas { display: flex; gap: 2.4vw; align-items: stretch; }
+.placa { width: 17vw; padding: 1.8vh 0; border-radius: 20px; font-weight: 900; font-size: 2.4em; color: #fff; display: flex; flex-direction: column; align-items: center; line-height: 1; }
 .placa span { font-size: 1.6em; }
 .placa.sobe { background: var(--sobe); } .placa.cai { background: var(--cai); }
-.contagem { font-size: 5em; font-weight: 900; color: var(--destaque); min-height: 1.1em; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.placa.nada { background: transparent; border: 3px dashed #5d7598; color: #c6d3ea; font-size: 1.5em; width: 15vw; justify-content: center; gap: .3em; line-height: 1.15; }
+.placa.nada span { font-size: 1.3em; }
+.contagem { font-size: min(4em, 8vh); font-weight: 900; color: var(--destaque); min-height: 0; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .acoes-noticia { display: flex; gap: 1vw; margin-top: 1vh; }
 #tela-noticia .btn { background: transparent; color: #fff; border-color: #2c4a74; }
 #tela-noticia .btn:hover { border-color: #fff; }
@@ -91,7 +93,8 @@ kbd { background: var(--cartao); border: 1px solid var(--linha); border-bottom-w
 .efeito .de-para { color: var(--suave); font-variant-numeric: tabular-nums; }
 .efeito .porque { grid-column: 1 / -1; font-size: 1.05em; line-height: 1.35; }
 .efeito .porque:empty { display: none; }
-.sem-efeito { color: var(--suave); }
+.sem-efeito { color: var(--suave); font-size: 1.15em; }
+.sem-efeito b { color: var(--texto); }
 .licao { background: var(--marinho); color: #fff; border-radius: 18px; padding: 1.8vh 1.6vw; font-size: 1.45em; font-weight: 700; display: flex; gap: .8em; align-items: center; }
 .licao b { color: var(--destaque); white-space: nowrap; }
 
@@ -163,6 +166,7 @@ kbd { background: var(--cartao); border: 1px solid var(--linha); border-bottom-w
       <div class="placas">
         <div class="placa sobe"><span>▲</span>SOBE</div>
         <div class="placa cai"><span>▼</span>CAI</div>
+        <div class="placa nada"><span>✋</span>Nenhuma placa<br>= não muda</div>
       </div>
       <div class="contagem" id="contagem"></div>
     </div>
@@ -325,7 +329,7 @@ function desenharResultado() {
       <div class="porque">${(n.porque && n.porque[c]) || ''}</div>
     </div>`;
   }).join('');
-  $('sem-efeito').textContent = paradas.length ? 'Não mexeram: ' + paradas.map(e => e.nome).join(', ') : '';
+  $('sem-efeito').innerHTML = paradas.length ? '<b>= Não mexeram:</b> ' + paradas.map(e => e.nome).join(', ') + ' <span style="opacity:.75">(acertou quem não levantou placa)</span>' : '';
   $('licao').innerHTML = `<b>💡 Lição:</b> <span>${n.licao || ''}</span>`;
   $('b-seguir').textContent = est.rodada >= NOT.length ? '🏆 Ver ranking final' : 'Próxima notícia ▶';
 }
