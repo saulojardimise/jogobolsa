@@ -154,6 +154,7 @@ kbd { background: var(--cartao); border: 1px solid var(--linha); border-bottom-w
     </div>
     <div class="grupo">
       <span class="dica"><kbd>Espaço</kbd> avança</span>
+      <button class="btn" id="b-rever">📰 Rever resultado</button>
       <button class="btn" id="b-ranking">🏆 Ranking final</button>
       <button class="btn forte" id="b-proxima">Próxima notícia ▶</button>
     </div>
@@ -191,7 +192,7 @@ kbd { background: var(--cartao); border: 1px solid var(--linha); border-bottom-w
   <div class="sem-efeito" id="sem-efeito"></div>
   <div class="licao" id="licao"></div>
   <div class="rodape">
-    <div class="grupo"><button class="btn" id="b-painel">Ver painel</button></div>
+    <div class="grupo"><button class="btn" id="b-painel">Ver painel</button><button class="btn" id="b-ant">◀ Anterior</button><button class="btn" id="b-seg">Seguinte ▶</button></div>
     <div class="grupo"><span class="dica"><kbd>Espaço</kbd> avança</span><button class="btn forte" id="b-seguir">Próxima notícia ▶</button></div>
   </div>
 </section>
@@ -267,6 +268,7 @@ function desenharPainel() {
   const acabou = est.rodada >= NOT.length;
   $('b-proxima').textContent = acabou ? '🏆 Ver ranking final' : 'Próxima notícia ▶';
   $('b-desfazer').disabled = !historico.length;
+  $('b-rever').disabled = est.rodada < 1;
 }
 
 function mostrar(tela) {
@@ -291,7 +293,7 @@ function desenharNoticia() {
   // reinicia animações
   ['selo', 'n-titulo'].forEach(id => { const el = $(id); el.style.animation = 'none'; el.offsetHeight; el.style.animation = ''; });
 }
-let timer = null;
+let timer = null, ver = 0;
 function pararContagem() { if (timer) { clearInterval(timer); timer = null; } }
 function contar() {
   pararContagem();
@@ -312,13 +314,19 @@ function revelar() {
     if (n.dividendo && n.dividendo[c]) est.divs[c] += n.dividendo[c];
   });
   est.rodada++;
+  ver = est.rodada;
   mostrar('resultado');
 }
 
 // ---------- resultado ----------
 function desenharResultado() {
-  const i = est.rodada - 1, n = NOT[i];
-  $('r-num').textContent = est.rodada;
+  if (!(ver >= 1 && ver <= est.rodada)) ver = est.rodada;
+  const i = ver - 1, n = NOT[i];
+  $('r-num').textContent = ver;
+  $('b-ant').disabled = ver <= 1;
+  $('b-seg').disabled = ver >= est.rodada;
+  $('b-ant').textContent = ver > 1 ? '◀ Notícia ' + (ver - 1) : '◀ Anterior';
+  $('b-seg').textContent = ver < est.rodada ? 'Notícia ' + (ver + 1) + ' ▶' : 'Seguinte ▶';
   $('r-titulo').textContent = n.titulo;
   const mexidas = EMP;   // sempre as 10 empresas, na ordem do painel
   const paradas = [];
@@ -329,7 +337,7 @@ function desenharResultado() {
     return `<div class="efeito ${tipo}" style="animation-delay:${k * 0.08}s">
       <div class="cab"><span class="ticker" style="background:${e.cor}">${c}</span><span class="nome">${e.nome}</span></div>
       <div class="pct ${classe(v)}">${v === 0 ? '= 0%' : (v > 0 ? '▲ ' : '▼ ') + pct(v, 0)}</div>
-      <div class="de-para">${brl(h[h.length - 2])} → <b style="color:var(--texto)">${brl(h[h.length - 1])}</b></div>
+      <div class="de-para">${brl(h[i])} → <b style="color:var(--texto)">${brl(h[i + 1])}</b></div>
       ${div}<div class="porque">${(n.porque && n.porque[c]) || (v === 0 ? 'Esta notícia não afeta a empresa: quem não levantou placa acertou.' : '')}</div>
     </div>`;
   }).join('');
@@ -397,6 +405,9 @@ $('b-painel').onclick = () => mostrar('painel');
 $('b-voltar-noticia').onclick = () => mostrar('painel');
 $('b-voltar-final').onclick = () => mostrar('painel');
 $('b-ranking').onclick = () => mostrar('final');
+$('b-rever').onclick = () => { ver = est.rodada; mostrar('resultado'); };
+$('b-ant').onclick = () => { if (ver > 1) { ver--; desenharResultado(); } };
+$('b-seg').onclick = () => { if (ver < est.rodada) { ver++; desenharResultado(); } };
 $('b-desfazer').onclick = desfazer;
 $('b-reiniciar').onclick = reiniciar;
 $('b-tela').onclick = telaCheia;
