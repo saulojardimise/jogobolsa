@@ -28,7 +28,7 @@ button { font: inherit; cursor: pointer; border: 0; border-radius: 12px; }
 .barra i { display: block; height: 100%; background: var(--marinho); border-radius: 99px; transition: width .5s; }
 
 /* ---------- painel ---------- */
-.grade { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(5, 1fr); grid-auto-rows: 1fr; gap: 1.4vh 1.2vw; }
+.grade { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 1.4vh 1.2vw; }
 .acao { background: var(--cartao); border-radius: 18px; padding: 1.6vh 1.1vw; display: flex; flex-direction: column; gap: .6vh; box-shadow: 0 2px 10px rgb(6 35 68 / .07); border: 3px solid transparent; transition: border-color .4s, transform .4s; min-height: 0; }
 .acao.mexeu-sobe { border-color: var(--sobe); }
 .acao.mexeu-cai { border-color: var(--cai); }
@@ -86,7 +86,7 @@ kbd { background: var(--cartao); border: 1px solid var(--linha); border-bottom-w
 /* ---------- resultado ---------- */
 .res-titulo { display: flex; align-items: baseline; gap: 1em; }
 .res-titulo h1 { margin: 0; font-size: 1.8em; line-height: 1.1; letter-spacing: -.02em; color: var(--marinho); }
-.efeitos { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 1.2vh 1vw; }
+.efeitos { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 1.2vh 1vw; }
 .efeito { background: var(--cartao); border-radius: 16px; padding: 1.3vh .9vw; display: flex; flex-direction: column; gap: .5vh; border-top: 8px solid var(--linha); animation: entra .5s ease-out backwards; min-height: 0; overflow: hidden; }
 .efeito.zero { opacity: .8; }
 .efeito .cab { display: flex; align-items: center; gap: .5em; }
@@ -110,7 +110,7 @@ kbd { background: var(--cartao); border: 1px solid var(--linha); border-bottom-w
 .degrau .bloco { width: 100%; border-radius: 16px 16px 0 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 1.5vh; font-size: 3.5em; font-weight: 900; color: var(--marinho); }
 .degrau .quem { font-size: 1.6em; font-weight: 800; text-align: center; }
 .degrau .quanto { font-size: 2.2em; font-weight: 900; }
-.lista-final { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1vh 1vw; }
+.lista-final { display: grid; grid-template-columns: repeat(var(--cols, 5), minmax(0, 1fr)); gap: 1vh 1vw; }
 .lista-final div { background: #0f3360; border-radius: 12px; padding: 1vh .8vw; display: flex; justify-content: space-between; font-weight: 700; }
 .lista-final .s { color: #5fe0a8; } .lista-final .c { color: #ff8a84; }
 .licoes-finais { display: flex; gap: 1vw; }
@@ -214,11 +214,12 @@ kbd { background: var(--cartao); border: 1px solid var(--linha); border-bottom-w
   </div>
 </section>
 
-<script src="dados.js?v=4"></script>
+<script src="dados.js?v=6"></script>
 <script>
 (() => {
 const EMP = window.EMPRESAS, NOT = window.NOTICIAS;
-const CHAVE = 'simulador-bolsa-v1';
+const CHAVE = 'simulador-bolsa-v2';
+document.documentElement.style.setProperty('--cols', Math.ceil(EMP.length / 2));
 const $ = id => document.getElementById(id);
 const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const pct = (v, casas = 1) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas }) + '%';
