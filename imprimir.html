@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cards e plaquinhas · Simulador da Bolsa</title>
+<title>Cards e plaquinhas · Simulador da Bolsa · Administração ISE</title>
 <style>
 @page { size: A4; margin: 10mm; }
 * { box-sizing: border-box; }
@@ -17,6 +17,8 @@ body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, san
 
 .card { border: 2.5px dashed #b8c3d6; border-radius: 6mm; padding: 7mm 6mm; display: flex; flex-direction: column; gap: 3mm; position: relative; overflow: hidden; }
 .card .faixa { position: absolute; inset: 0 0 auto 0; height: 9mm; }
+.card .ise { position: absolute; top: 12mm; right: 5mm; display: flex; align-items: center; gap: 2mm; text-align: right; font-size: 8.5pt; font-weight: 700; color: #0f6fa7; line-height: 1.15; }
+.card .ise img { height: 15mm; width: auto; }
 .card .tk { margin-top: 5mm; display: inline-block; align-self: flex-start; color: #fff; font-weight: 900; font-size: 22pt; padding: 1.5mm 4mm; border-radius: 3mm; letter-spacing: .5px; }
 .card h2 { margin: 0; font-size: 26pt; line-height: 1.05; letter-spacing: -.5px; }
 .card .setor { font-size: 13pt; color: #55627a; font-weight: 600; }
@@ -31,6 +33,8 @@ body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, san
 .placa .seta { font-size: 150pt; line-height: .9; }
 .placa .palavra { font-size: 110pt; font-weight: 900; letter-spacing: 4px; line-height: 1; }
 .placa .sub { font-size: 16pt; opacity: .9; margin-top: 4mm; }
+.placa .ise { margin-top: 6mm; background: #fff; border-radius: 4mm; padding: 2mm 4mm; display: flex; align-items: center; gap: 3mm; color: #0f6fa7; font-weight: 800; font-size: 11pt; }
+.placa .ise img { height: 13mm; }
 .placa.sobe { background: #0a8a55; } .placa.cai { background: #d0312d; }
 .placa.cai .conteudo { transform: rotate(180deg); display: flex; flex-direction: column; align-items: center; }
 .placa.sobe .conteudo { display: flex; flex-direction: column; align-items: center; }
@@ -51,7 +55,7 @@ body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, san
 <div id="cards"></div>
 <div id="placas"></div>
 
-<script src="dados.js?v=6"></script>
+<script src="dados.js?v=7"></script>
 <script>
 const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const n = window.NOTICIAS.length;
@@ -59,6 +63,7 @@ document.documentElement.style.setProperty('--n', Math.min(n, 13));
 function card(e) {
   return `<div class="card">
     <div class="faixa" style="background:${e.cor}"></div>
+    <div class="ise"><span>Curso de<br>Administração</span><img src="logo-ise.png" alt="ISE"></div>
     <span class="tk" style="background:${e.cor}">${e.codigo}</span>
     <h2>${e.nome}</h2>
     <div class="setor">${e.setor}</div>
@@ -75,8 +80,8 @@ for (let i = 0; i < E.length; i += 4) folhasCards.push(`<div class="folha cards"
 document.getElementById('cards').innerHTML = folhasCards.join('');
 
 const placa = `<div class="folha placas">
-  <div class="placa cai"><div class="conteudo"><div class="seta">▼</div><div class="palavra">CAI</div><div class="sub">a ação vai se desvalorizar</div></div></div>
-  <div class="placa sobe"><div class="conteudo"><div class="seta">▲</div><div class="palavra">SOBE</div><div class="sub">a ação vai se valorizar</div></div></div>
+  <div class="placa cai"><div class="conteudo"><div class="seta">▼</div><div class="palavra">CAI</div><div class="sub">a ação vai se desvalorizar</div><div class="ise"><img src="logo-ise.png" alt="ISE">Administração ISE</div></div></div>
+  <div class="placa sobe"><div class="conteudo"><div class="seta">▲</div><div class="palavra">SOBE</div><div class="sub">a ação vai se valorizar</div><div class="ise"><img src="logo-ise.png" alt="ISE">Administração ISE</div></div></div>
 </div>`;
 function atualizar() {
   const q = Math.max(1, Math.min(60, +document.getElementById('n-placas').value || 1));
