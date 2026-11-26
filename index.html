@@ -28,6 +28,12 @@ button { font: inherit; cursor: pointer; border: 0; border-radius: 12px; }
 .marca small { font-weight: 600; font-size: .55em; color: var(--suave); letter-spacing: 0; }
 .rodada { font-weight: 700; color: var(--suave); font-size: 1.05em; }
 .rodada b { color: var(--marinho); font-size: 1.35em; }
+.escolha { display: flex; align-items: center; gap: .7em; background: var(--cartao); border: 2px solid var(--marinho); border-radius: 14px; padding: .45em .8em; font-weight: 800; color: var(--marinho); }
+.escolha .nums { display: flex; gap: .3em; }
+.escolha .num { min-width: 2.2em; height: 2.2em; border-radius: 9px; background: var(--fundo); color: var(--marinho); font-weight: 800; border: 2px solid var(--linha); padding: 0; }
+.escolha .num:hover { border-color: var(--marinho); }
+.escolha .num.ativo { background: var(--marinho); color: #fff; border-color: var(--marinho); }
+.escolha .tempo { color: var(--suave); font-weight: 600; font-size: .85em; white-space: nowrap; }
 .barra { height: .5em; background: var(--linha); border-radius: 99px; overflow: hidden; width: 14vw; margin-top: .35em; }
 .barra i { display: block; height: 100%; background: var(--marinho); border-radius: 99px; transition: width .5s; }
 
@@ -146,6 +152,7 @@ kbd { background: var(--cartao); border: 1px solid var(--linha); border-bottom-w
       <img class="logo-ise" src="logo-ise.png" alt="ISE · Institutos Superiores de Ensino do CENSA">
       <div>Simulador da Bolsa<br><small>Curso de Administração · ISE · preços e notícias fictícios</small></div>
     </div>
+    <div class="escolha" id="escolha"><span>Quantas notícias?</span><div class="nums" id="nums"></div><span class="tempo" id="tempo"></span></div>
     <div class="rodada"><div>Notícia <b id="num-rodada">0</b> de <span id="total-rodadas"></span></div><div class="barra"><i id="progresso"></i></div></div>
   </div>
   <div class="grade" id="grade"></div>
@@ -219,11 +226,14 @@ kbd { background: var(--cartao); border: 1px solid var(--linha); border-bottom-w
   </div>
 </section>
 
-<script src="dados.js?v=8"></script>
+<script src="dados.js?v=9"></script>
 <script>
 (() => {
-const EMP = window.EMPRESAS, NOT = window.NOTICIAS;
-const CHAVE = 'simulador-bolsa-v2';
+const EMP = window.EMPRESAS, BANCO = window.BANCO_NOTICIAS;
+const MAX = BANCO.length, MIN = window.RODADAS_MINIMO || 4;
+let NOT = [];
+function sincronizar() { NOT = (est.lista || []).map(i => BANCO[i - 1]).filter(Boolean); }
+const CHAVE = 'simulador-bolsa-v3';
 document.documentElement.style.setProperty('--cols', Math.ceil(EMP.length / 2));
 const $ = id => document.getElementById(id);
 const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -233,13 +243,14 @@ const classe = v => v > 0.0001 ? 's' : v < -0.0001 ? 'c' : 'z';
 function inicial() {
   const precos = {}, divs = {};
   EMP.forEach(e => { precos[e.codigo] = [e.preco]; divs[e.codigo] = 0; });
-  return { rodada: 0, precos, divs, tela: 'painel' };
+  return { rodada: 0, precos, divs, tela: 'painel', lista: window.listaDeNoticias(window.RODADAS_PADRAO || 8) };
 }
 let est = inicial(), historico = [];
 try {
   const salvo = JSON.parse(localStorage.getItem(CHAVE) || 'null');
-  if (salvo && salvo.est && salvo.est.precos && EMP.every(e => salvo.est.precos[e.codigo])) { est = salvo.est; historico = salvo.historico || []; }
+  if (salvo && salvo.est && salvo.est.precos && Array.isArray(salvo.est.lista) && EMP.every(e => salvo.est.precos[e.codigo])) { est = salvo.est; historico = salvo.historico || []; }
 } catch (_) {}
+sincronizar();
 function salvar() { try { localStorage.setItem(CHAVE, JSON.stringify({ est, historico })); } catch (_) {} }
 
 const atual = c => est.precos[c][est.precos[c].length - 1];
@@ -258,6 +269,14 @@ function spark(c) {
 function desenharPainel() {
   $('num-rodada').textContent = est.rodada;
   $('total-rodadas').textContent = NOT.length;
+  const esc = $('escolha');
+  esc.style.display = est.rodada === 0 ? '' : 'none';
+  if (est.rodada === 0) {
+    let h = '';
+    for (let n = MIN; n <= MAX; n++) h += `<button class="num ${n === NOT.length ? 'ativo' : ''}" data-n="${n}">${n}</button>`;
+    $('nums').innerHTML = h;
+    $('tempo').textContent = `≈ ${NOT.length * 4}–${NOT.length * 5} min`;
+  }
   $('progresso').style.width = (est.rodada / NOT.length * 100) + '%';
   $('grade').innerHTML = EMP.map(e => {
     const c = e.codigo, u = ultimaVar(c), r = retorno(c);
@@ -386,7 +405,7 @@ function avancar() {
 }
 function desfazer() {
   if (!historico.length) return;
-  est = historico.pop(); est.tela = 'painel'; mostrar('painel');
+  est = historico.pop(); sincronizar(); est.tela = 'painel'; mostrar('painel');
 }
 let confirmando = null;
 function reiniciar() {
@@ -397,7 +416,7 @@ function reiniciar() {
     return;
   }
   clearTimeout(confirmando); confirmando = null; b.textContent = 'Reiniciar'; b.classList.remove('confirmar');
-  est = inicial(); historico = []; mostrar('painel');
+  const n = NOT.length; est = inicial(); est.lista = window.listaDeNoticias(n); sincronizar(); historico = []; mostrar('painel');
 }
 function telaCheia() {
   try { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); } catch (_) {}
@@ -415,6 +434,10 @@ $('b-rever').onclick = () => { ver = est.rodada; mostrar('resultado'); };
 $('b-ant').onclick = () => { if (ver > 1) { ver--; desenharResultado(); } };
 $('b-seg').onclick = () => { if (ver < est.rodada) { ver++; desenharResultado(); } };
 $('b-desfazer').onclick = desfazer;
+$('nums').addEventListener('click', ev => {
+  const b = ev.target.closest('[data-n]'); if (!b || est.rodada !== 0) return;
+  est.lista = window.listaDeNoticias(+b.dataset.n); sincronizar(); salvar(); desenharPainel();
+});
 $('b-reiniciar').onclick = reiniciar;
 $('b-tela').onclick = telaCheia;
 document.addEventListener('keydown', ev => {

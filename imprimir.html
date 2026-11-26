@@ -61,11 +61,11 @@ body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, san
 <div id="cards"></div>
 <div id="placas"></div>
 
-<script src="dados.js?v=8"></script>
+<script src="dados.js?v=9"></script>
 <script>
 const brl = v => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const n = window.NOTICIAS.length;
-document.documentElement.style.setProperty('--n', Math.min(n, 13));
+let n = window.BANCO_NOTICIAS.length;  // caixinhas para o máximo de rodadas; use só as primeiras
+document.documentElement.style.setProperty('--n', n);
 function card(e) {
   return `<div class="card">
     <div class="faixa" style="background:${e.cor}"></div>
@@ -76,8 +76,8 @@ function card(e) {
     <div class="preco">Preço inicial: <b>${brl(e.preco)}</b></div>
     <div class="voce">Você é acionista da <b>${e.nome}</b>. A cada notícia, levante a plaquinha: sua ação vai <b style="color:#0a8a55">SUBIR ▲</b> ou <b style="color:#d0312d">CAIR ▼</b>? Se acha que <b>não muda</b>, não levante nada.</div>
     <div class="linha">Nome: </div>
-    <div class="placar">Marque ✓ quando acertar a previsão:
-      <div class="caixas">${Array.from({ length: Math.min(n, 13) }, (_, i) => `<span>${i + 1}</span>`).join('')}</div>
+    <div class="placar">Marque ✓ quando acertar (use só as caixas das rodadas jogadas):
+      <div class="caixas">${Array.from({ length: n }, (_, i) => `<span>${i + 1}</span>`).join('')}</div>
     </div>
   </div>`;
 }

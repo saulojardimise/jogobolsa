@@ -322,10 +322,32 @@ window.BANCO_NOTICIAS = [
 ];
 
 // =====================================================================
-//  NOTÍCIAS DO JOGO: números do banco acima, na ordem em que aparecem.
-//  Padrão (8 rodadas): dólar, Selic, Black Friday, boato, desmentido,
-//  Copom "já esperado", tarifa dos EUA e desemprego recorde.
-//  Reserva para trocar: 2 China, 7 petróleo, 11 seca, 12 calor, 13 crise global.
+//  RANKING DE PRIORIDADE das notícias (números do banco acima).
+//  Ao escolher N rodadas no início do jogo, entram as N primeiras daqui.
+//   1º  1 Dólar dispara ............ exportadoras x importadoras
+//   2º  3 Selic sobe ............... juros x bolsa
+//   3º  5 Boato nas redes .......... boatos movem preços
+//   4º  6 Desmentido + dividendos .. (sempre junto com o boato)
+//   5º 10 Copom "já esperado" ...... o mercado reage à surpresa
+//   6º  8 Tarifa dos EUA ........... conhecer a empresa (Gerdau sobe!)
+//   7º  4 Black Friday ............. efeitos indiretos (papelão)
+//   8º  9 Desemprego recorde ....... economia interna x exportadoras
+//   9º  2 China acelera ............ commodities
+//  10º 13 Crise global ............. risco que atinge todos
+//  11º 11 Seca histórica ........... clima e energia
+//  12º  7 Petróleo sobe ............ matéria-prima
+//  13º 12 Onda de calor ............ nem tudo afeta todos
 // =====================================================================
-const USAR = [1, 3, 4, 5, 6, 10, 8, 9];
-window.NOTICIAS = USAR.map(n => window.BANCO_NOTICIAS[n - 1]).filter(Boolean);
+window.PRIORIDADE = [1, 3, 5, 6, 10, 8, 4, 9, 2, 13, 11, 7, 12];
+
+// Ordem em que as notícias escolhidas aparecem no jogo (conta uma história).
+window.ORDEM_DO_JOGO = [1, 2, 3, 4, 5, 6, 10, 7, 8, 11, 12, 9, 13];
+
+window.RODADAS_PADRAO = 8;
+window.RODADAS_MINIMO = 4;
+
+window.listaDeNoticias = n => {
+  const escolhidas = window.PRIORIDADE.slice(0, n);
+  return window.ORDEM_DO_JOGO.filter(i => escolhidas.includes(i));
+};
+window.NOTICIAS = window.listaDeNoticias(window.RODADAS_PADRAO).map(i => window.BANCO_NOTICIAS[i - 1]);
